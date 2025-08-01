@@ -1,143 +1,53 @@
-# AWS Project - Build a Full End-to-End Web Application with 7 Services | Step-by-Step Tutorial
+# Wild Rydes Web Application (Guided AWS Project)
 
-This repo contains the code files used in this [YouTube video](https://www.youtube.com/watch?v=K6v6t5z6AsU&t=135s&ab_channel=TinyTechnicalTutorials).
+This is a web application for a unicorn ride-sharing service called **Wild Rydes**, based on a tutorial created by "Tiny Technical Tutorials" on YouTube [https://www.youtube.com/watch?v=K6v6t5z6AsU&t=135s&ab_channel=TinyTechnicalTutorials). This project was completed as a hands-on exercise to learn how to build and deploy a full-stack serverless app on AWS using real-world services.
 
-## Disclaimer
+---
 
-This project is based on the [AWS WildRydes tutorial by Tiny Technical Tutorials](https://www.youtube.com/watch?v=K6v6t5z6AsU&t=135s&ab_channel=TinyTechnicalTutorials).  
-I used the original repository as a learning resource to understand how to build serverless applications using AWS.  
-All code is either from the original tutorial or modified by me as part of my learning process.
+## Technologies Used
 
-## TL;DR
-We're creating a web application for a unicorn ride-sharing service called Wild Rydes (from the original [Amazon workshop](https://aws.amazon.com/serverless-workshops)).  The app uses IAM, Amplify, Cognito, Lambda, API Gateway and DynamoDB, with code stored in GitHub and incorporated into a CI/CD pipeline with Amplify.
+- **GitHub** – Source code version control and integration with AWS Amplify for CI/CD
+- **AWS Amplify** – Frontend hosting and automated deployment from GitHub
+- **Amazon Cognito** – User authentication (signup, login, and identity management)
+- **API Gateway** – RESTful API entry point
+- **AWS Lambda** – Serverless backend functions triggered by API calls
+- **Amazon DynamoDB** – NoSQL database for storing ride request data
+- **IAM (Identity and Access Management)** – Permission control for accessing AWS services
+- **ArcGIS JavaScript API** – Interactive map to allow users to request a ride
 
-The app will let you create an account and log in, then request a ride by clicking on a map (powered by ArcGIS).  The code can also be extended to build out more functionality.
+---
 
-## My Modifications
+## How It Works
 
-- Deployed in my own AWS environment
-- Rebranded the UI and styling
-- Added additional [feature X]
-- Integrated [service Y] beyond the original scope
+1. The app is deployed through **AWS Amplify**, which pulls the source code from a connected GitHub repository.
+2. When users visit the app, they're prompted to **sign up or log in** via **Amazon Cognito**.
+3. After logging in, users can click on a map (powered by ArcGIS) to request a unicorn ride.
+4. The **front-end app** sends the ride request to an **API Gateway** endpoint.
+5. The request is handled by an **AWS Lambda** function, which stores the ride data in **DynamoDB**.
+6. **Amplify’s CI/CD** pipeline automatically deploys updates any time changes are pushed to GitHub.
 
-## Cost
-All services used are eligible for the [AWS Free Tier](https://aws.amazon.com/free/).  Outside of the Free Tier, there may be small charges associated with building the app (less than $1 USD), but charges will continue to incur if you leave the app running.  Please see the end of the YouTube video for instructions on how to delete all resources used in the video.
+---
 
-## The Application Code
-The application code is here in this repository.
+## What I Learned
 
-## The Lambda Function Code
-Here is the code for the Lambda function, originally taken from the [AWS workshop](https://aws.amazon.com/getting-started/hands-on/build-serverless-web-app-lambda-apigateway-s3-dynamodb-cognito/module-3/ ), and updated for Node 20.x:
+- How to deploy a serverless web app using **AWS Amplify**
+- How to implement **CI/CD** by connecting a GitHub repo to Amplify
+- Basic configuration of **Cognito** for secure user authentication
+- How **API Gateway** connects frontend requests to **Lambda** functions
+- Writing and deploying serverless logic with **Lambda**
+- Storing and retrieving structured data using **DynamoDB**
+- How IAM roles/policies govern service access and application permissions
 
-```node
-import { randomBytes } from 'crypto';
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb';
-import { DynamoDBDocumentClient, PutCommand } from '@aws-sdk/lib-dynamodb';
+---
 
-const client = new DynamoDBClient({});
-const ddb = DynamoDBDocumentClient.from(client);
+## Notes
 
-const fleet = [
-    { Name: 'Angel', Color: 'White', Gender: 'Female' },
-    { Name: 'Gil', Color: 'White', Gender: 'Male' },
-    { Name: 'Rocinante', Color: 'Yellow', Gender: 'Female' },
-];
+- This project followed the tutorial created by "Tiny Technical Tutorials" on YouTube [https://www.youtube.com/watch?v=K6v6t5z6AsU&t=135s&ab_channel=TinyTechnicalTutorials) and was deployed in my own AWS environment as part of a personal cloud learning initiative.
+- All AWS resources have been deleted post-completion.
+- No live demo is available. Attached is a file with screenshots and notes taken throughout the process of completing this project.
 
-export const handler = async (event, context) => {
-    if (!event.requestContext.authorizer) {
-        return errorResponse('Authorization not configured', context.awsRequestId);
-    }
+---
 
-    const rideId = toUrlString(randomBytes(16));
-    console.log('Received event (', rideId, '): ', event);
+## Acknowledgments
 
-    const username = event.requestContext.authorizer.claims['cognito:username'];
-    const requestBody = JSON.parse(event.body);
-    const pickupLocation = requestBody.PickupLocation;
-
-    const unicorn = findUnicorn(pickupLocation);
-
-    try {
-        await recordRide(rideId, username, unicorn);
-        return {
-            statusCode: 201,
-            body: JSON.stringify({
-                RideId: rideId,
-                Unicorn: unicorn,
-                Eta: '30 seconds',
-                Rider: username,
-            }),
-            headers: {
-                'Access-Control-Allow-Origin': '*',
-            },
-        };
-    } catch (err) {
-        console.error(err);
-        return errorResponse(err.message, context.awsRequestId);
-    }
-};
-
-function findUnicorn(pickupLocation) {
-    console.log('Finding unicorn for ', pickupLocation.Latitude, ', ', pickupLocation.Longitude);
-    return fleet[Math.floor(Math.random() * fleet.length)];
-}
-
-async function recordRide(rideId, username, unicorn) {
-    const params = {
-        TableName: 'Rides',
-        Item: {
-            RideId: rideId,
-            User: username,
-            Unicorn: unicorn,
-            RequestTime: new Date().toISOString(),
-        },
-    };
-    await ddb.send(new PutCommand(params));
-}
-
-function toUrlString(buffer) {
-    return buffer.toString('base64')
-        .replace(/\+/g, '-')
-        .replace(/\//g, '_')
-        .replace(/=/g, '');
-}
-
-function errorResponse(errorMessage, awsRequestId) {
-    return {
-        statusCode: 500,
-        body: JSON.stringify({
-            Error: errorMessage,
-            Reference: awsRequestId,
-        }),
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-        },
-    };
-}
-```
-
-## The Lambda Function Test Function
-Here is the code used to test the Lambda function:
-
-```json
-{
-    "path": "/ride",
-    "httpMethod": "POST",
-    "headers": {
-        "Accept": "*/*",
-        "Authorization": "eyJraWQiOiJLTzRVMWZs",
-        "content-type": "application/json; charset=UTF-8"
-    },
-    "queryStringParameters": null,
-    "pathParameters": null,
-    "requestContext": {
-        "authorizer": {
-            "claims": {
-                "cognito:username": "the_username"
-            }
-        }
-    },
-    "body": "{\"PickupLocation\":{\"Latitude\":47.6174755835663,\"Longitude\":-122.28837066650185}}"
-}
-```
-
+This project is based on the [AWS Serverless Web Application Workshop (Wild Rydes)](https://github.com/aws-samples/aws-serverless-workshops).
