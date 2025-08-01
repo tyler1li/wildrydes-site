@@ -44,10 +44,11 @@ This is a web application for a unicorn ride-sharing service called **Wild Rydes
 
 - This project followed the tutorial created by "Tiny Technical Tutorials" on YouTube [https://www.youtube.com/watch?v=K6v6t5z6AsU&t=135s&ab_channel=TinyTechnicalTutorials) and was deployed in my own AWS environment as part of a personal cloud learning initiative.
 - All AWS resources have been deleted post-completion.
-- No live demo is available. Attached is a file with screenshots and notes taken throughout the process of completing this project.
+- No live demo is available. Listed below is a downloadable file with screenshots and notes taken throughout the process of completing this project.
+- [📄 Download the WildRydes Walkthrough (Word Document)](https://github.com/tyler1li/wildrydes-site/raw/main/WildRydes_Walkthrough.docx)
 
 ---
 
 ## Acknowledgments
 
-This project is based on the [AWS Serverless Web Application Workshop (Wild Rydes)](https://github.com/aws-samples/aws-serverless-workshops).
+This project is based on the "Tiny Technical Tutorials" on YouTube [https://www.youtube.com/watch?v=K6v6t5z6AsU&t=135s&ab_channel=TinyTechnicalTutorials)
